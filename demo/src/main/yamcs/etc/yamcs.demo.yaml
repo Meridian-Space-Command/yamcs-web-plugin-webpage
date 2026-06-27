@@ -1,0 +1,28 @@
+# Intentionally minimal instance: just enough for Yamcs to start an instance so the
+# yamcs-web sidebar (and the ESTRACK extension item) render. No TM/TC packet decoding,
+# so no mission database root container is required.
+services:
+  - class: org.yamcs.archive.ParameterRecorder
+  - class: org.yamcs.archive.EventRecorder
+  - class: org.yamcs.archive.AlarmRecorder
+  - class: org.yamcs.archive.ReplayServer
+  - class: org.yamcs.parameter.SystemParametersService
+    args:
+      producers:
+        - jvm
+        - fs
+  - class: org.yamcs.ProcessorCreatorService
+    args:
+      name: realtime
+      type: realtime
+  - class: org.yamcs.timeline.TimelineService
+
+mdb:
+  - type: xtce
+    args:
+      file: mdb/demo.xml
+
+streamConfig:
+  param: ["pp_realtime", "sys_param", "proc_param"]
+  event: ["events_realtime", "events_dump"]
+  parameterAlarm: ["alarms_realtime"]

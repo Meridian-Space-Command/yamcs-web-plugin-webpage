@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <groupId>com.meridian.yamcs</groupId>
+  <artifactId>yamcs-external-webpage-parent</artifactId>
+  <version>1.0.0</version>
+  <packaging>pom</packaging>
+
+  <name>Yamcs external-webpage plugin (parent)</name>
+  <description>
+    Reusable Yamcs plugin that adds a sidebar item to yamcs-web which embeds an
+    external webpage in the main content area. Visibility is gated by a Yamcs
+    system privilege. The displayed name, URL and privilege are configured in
+    etc/external-webpage.yaml (no rebuild required to change them).
+  </description>
+
+  <properties>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <maven.compiler.release>17</maven.compiler.release>
+    <yamcsVersion>5.13.0</yamcsVersion>
+  </properties>
+
+  <modules>
+    <module>plugin</module>
+    <module>demo</module>
+  </modules>
+
+</project>

@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+
+  <parent>
+    <groupId>com.meridian.yamcs</groupId>
+    <artifactId>yamcs-external-webpage-parent</artifactId>
+    <version>1.0.0</version>
+  </parent>
+
+  <artifactId>estrack-demo</artifactId>
+  <packaging>jar</packaging>
+
+  <name>Yamcs ESTRACK demo deployment</name>
+  <description>Minimal runnable Yamcs that bundles the external-webpage plugin, configured as ESTRACK.</description>
+
+  <dependencies>
+    <dependency>
+      <groupId>org.yamcs</groupId>
+      <artifactId>yamcs-core</artifactId>
+      <version>${yamcsVersion}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.yamcs</groupId>
+      <artifactId>yamcs-web</artifactId>
+      <version>${yamcsVersion}</version>
+    </dependency>
+
+    <!-- The plugin under test. -->
+    <dependency>
+      <groupId>com.meridian.yamcs</groupId>
+      <artifactId>external-webpage</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.yamcs</groupId>
+        <artifactId>yamcs-maven-plugin</artifactId>
+        <version>1.3.8</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>detect</goal>
+            </goals>
+          </execution>
+          <execution>
+            <id>bundle-yamcs</id>
+            <phase>package</phase>
+            <goals>
+              <goal>bundle</goal>
+            </goals>
+            <configuration>
+              <formats>
+                <format>tar.gz</format>
+              </formats>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+</project>

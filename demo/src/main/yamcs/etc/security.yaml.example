@@ -1,0 +1,34 @@
+# Example security configuration showing how the ESTRACK item is gated.
+#
+# The demo runs WITHOUT this file: with no security.yaml, Yamcs grants the
+# unauthenticated user superuser privileges, so the ESTRACK item is visible
+# immediately. To demonstrate real privilege gating, rename this file to
+# 'security.yaml' and restart.
+#
+# With the config below:
+#   * 'admin' is a superuser and always sees ESTRACK.
+#   * 'operator' only sees ESTRACK because the 'estrack-viewer' role grants
+#     the 'web.ESTRACK' system privilege. Remove that grant and the operator
+#     no longer sees the item.
+
+authModules:
+  - class: org.yamcs.security.YamlAuthModule
+    args:
+      hasher: org.yamcs.security.PBKDF2PasswordHasher
+
+# Users and roles for the YamlAuthModule live in etc/users.yaml and etc/roles.yaml.
+# Example etc/roles.yaml:
+#
+#   estrack-viewer:
+#     systemPrivileges:
+#       - web.ESTRACK
+#
+# Example etc/users.yaml (passwords must be hashed; see Yamcs docs):
+#
+#   admin:
+#     superuser: true
+#     password: "<hashed>"
+#   operator:
+#     roles:
+#       - estrack-viewer
+#     password: "<hashed>"

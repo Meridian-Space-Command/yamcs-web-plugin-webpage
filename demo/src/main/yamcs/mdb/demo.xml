@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Minimal XTCE space system for the demo. System parameters (jvm/fs) are added by
+     SystemParametersService at runtime, so this mission database can be empty. -->
+<SpaceSystem name="demo"
+             xmlns="http://www.omg.org/spec/XTCE/20180204"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <TelemetryMetaData>
+    <ParameterTypeSet/>
+    <ParameterSet/>
+    <ContainerSet/>
+  </TelemetryMetaData>
+  <CommandMetaData>
+    <MetaCommandSet/>
+  </CommandMetaData>
+</SpaceSystem>

@@ -1,0 +1,15 @@
+# Maven
+target/
+
+# Node / web build
+web-extension/node_modules/
+web-extension/dist/
+node/
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store

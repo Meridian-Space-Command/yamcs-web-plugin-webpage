@@ -1,0 +1,10 @@
+realtime:
+  services:
+    - class: org.yamcs.tctm.StreamParameterProvider
+      args:
+        streams: ["pp_realtime", "sys_param"]
+    - class: org.yamcs.parameter.LocalParameterManager
+  config:
+    subscribeAll: true
+    recordInitialValues: true
+    recordLocalValues: true

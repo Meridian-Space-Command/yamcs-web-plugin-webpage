@@ -1,0 +1,31 @@
+# Configuration for the external-webpage plugin.
+#
+# EDIT THE TWO VALUES BELOW. They are read by Yamcs at startup and passed to the
+# web UI, so changing them takes effect on the next restart -- no rebuild required.
+# (The install script copies this file into your Yamcs deployment's etc/ directory.)
+
+# Text shown for the item in the yamcs-web sidebar (this is "the name").
+label: My Page
+
+# External webpage embedded (in an iframe) in the main content area.
+# Note: the target site must permit being framed. Sites that send
+# 'X-Frame-Options: DENY/SAMEORIGIN' or a restrictive CSP 'frame-ancestors'
+# will refuse to embed.
+url: https://example.com/
+
+# ---- Optional settings (sensible defaults shown) ----
+
+# System privilege required to see the item. The plugin registers this privilege
+# with the security module so it can be assigned to roles. Superusers always see it.
+privilege: web.ExternalPage
+
+# Sidebar group. 'archive' renders the item as a standalone entry at the bottom of
+# the instance sidebar with a correct link. Other groups (telemetry, commanding,
+# procedures, mdb) are accepted but generally not suitable for external pages.
+group: archive
+
+# Material Symbols icon name shown next to the label.
+icon: public
+
+# Sort hint among extension items (lower = higher in the list).
+order: 0

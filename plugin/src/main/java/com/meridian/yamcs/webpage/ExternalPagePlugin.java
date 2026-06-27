@@ -1,0 +1,135 @@
+package com.meridian.yamcs.webpage;
+
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashMap;
+import java.util.Map;
+
+import org.yamcs.AbstractPlugin;
+import org.yamcs.ConfigurationException;
+import org.yamcs.PluginException;
+import org.yamcs.Spec;
+import org.yamcs.YConfiguration;
+import org.yamcs.security.SystemPrivilege;
+import org.yamcs.web.WebPlugin;
+
+/**
+ * Yamcs plugin that registers a yamcs-web extension which adds a sidebar item
+ * embedding an external webpage in the main content area.
+ * <p>
+ * The plugin itself is intentionally thin: all behaviour lives in the bundled
+ * web extension ({@code external-webpage.js}). This plugin only:
+ * <ol>
+ * <li>reads the standalone configuration file {@code etc/external-webpage.yaml},</li>
+ * <li>registers the configured system privilege with the security module, and</li>
+ * <li>hands the prebuilt web bundle and configuration to {@link WebPlugin}.</li>
+ * </ol>
+ * <p>
+ * The plugin <em>name</em> (= the Maven artifactId, {@code external-webpage}) is
+ * significant: yamcs-web instantiates a custom element named after it and routes
+ * its page at {@code /<instance>/ext/<name>}. It must match the custom-element tag
+ * defined in the web extension.
+ * <p>
+ * The displayed name and the URL are not hard-coded: they come from the configuration
+ * file {@code etc/external-webpage.yaml} ({@code label} / {@code url}) and can be changed
+ * without rebuilding.
+ */
+public class ExternalPagePlugin extends AbstractPlugin {
+
+    /** Classpath folder where the built web bundle is packaged (see plugin/pom.xml). */
+    private static final String BUNDLE_RESOURCE_DIR = "/webpage-extension";
+    private static final String BUNDLE_FILE = "external-webpage.js";
+
+    /** Standalone config file name: resolves to {@code etc/external-webpage.yaml}. */
+    private static final String CONFIG_SUBSYSTEM = "external-webpage";
+
+    private static final String DEFAULT_PRIVILEGE = "web.ExternalPage";
+    private static final String DEFAULT_GROUP = "archive";
+    private static final String DEFAULT_ICON = "public";
+
+    @Override
+    public Spec getSpec() {
+        // No options are expected in yamcs.yaml; configuration lives in etc/external-webpage.yaml.
+        return new Spec();
+    }
+
+    @Override
+    public void init() throws PluginException {
+        var webPlugin = yamcs.getPluginManager().getPlugin(WebPlugin.class);
+        if (webPlugin == null) {
+            log.warn("yamcs-web (WebPlugin) is not installed; "
+                    + "the '{}' external-page extension will not be registered.", pluginName);
+            return;
+        }
+
+        YConfiguration config;
+        try {
+            config = YConfiguration.getConfiguration(CONFIG_SUBSYSTEM);
+        } catch (ConfigurationException e) {
+            log.warn("No 'etc/{}.yaml' found; the '{}' external-page extension will not be registered.",
+                    CONFIG_SUBSYSTEM, pluginName);
+            return;
+        }
+
+        if (!config.containsKey("label") || !config.containsKey("url")) {
+            throw new PluginException(
+                    "etc/" + CONFIG_SUBSYSTEM + ".yaml must define both 'label' and 'url'.");
+        }
+
+        String label = config.getString("label");
+        String url = config.getString("url");
+        String privilege = config.getString("privilege", DEFAULT_PRIVILEGE);
+        String group = config.getString("group", DEFAULT_GROUP);
+        String icon = config.getString("icon", DEFAULT_ICON);
+        int order = config.getInt("order", 0);
+
+        // Register the privilege so it becomes assignable to roles in the security module.
+        // Superusers always pass the check; everybody else needs this privilege to see the item.
+        yamcs.getSecurityStore().addSystemPrivilege(new SystemPrivilege(privilege));
+
+        // Passed through to the web app and read by the extension at runtime, so the label
+        // and URL can be changed in etc/external-webpage.yaml without rebuilding anything.
+        Map<String, Object> extensionConfig = new HashMap<>();
+        extensionConfig.put("label", label);
+        extensionConfig.put("url", url);
+        extensionConfig.put("privilege", privilege);
+        extensionConfig.put("group", group);
+        extensionConfig.put("icon", icon);
+        extensionConfig.put("order", order);
+
+        Path staticRoot = extractWebBundle();
+
+        // The extension id must equal the plugin name so yamcs-web instantiates the
+        // matching custom element <external-webpage>.
+        webPlugin.addExtension(pluginName, extensionConfig, staticRoot);
+
+        log.info("Registered external-page extension '{}' -> {} (privilege: {}, group: {})",
+                label, url, privilege, group);
+    }
+
+    /**
+     * Extracts the bundled web files from the plugin jar to a temporary directory,
+     * which is then served by yamcs-web as an extra static root.
+     */
+    private Path extractWebBundle() throws PluginException {
+        try {
+            Path dir = Files.createTempDirectory("external-webpage-");
+            dir.toFile().deleteOnExit();
+            Path target = dir.resolve(BUNDLE_FILE);
+            String resource = BUNDLE_RESOURCE_DIR + "/" + BUNDLE_FILE;
+            try (InputStream in = getClass().getResourceAsStream(resource)) {
+                if (in == null) {
+                    throw new PluginException("Missing bundled web resource: " + resource
+                            + " (the web extension was not built into the plugin jar).");
+                }
+                Files.copy(in, target);
+            }
+            target.toFile().deleteOnExit();
+            return dir;
+        } catch (IOException e) {
+            throw new PluginException("Could not extract the web extension bundle", e);
+        }
+    }
+}
