@@ -24,8 +24,9 @@
   <name>Yamcs external-webpage plugin</name>
 
   <properties>
-    <nodeVersion>v20.18.0</nodeVersion>
-    <npmVersion>10.8.2</npmVersion>
+    <!-- Angular 21 requires Node 20.19+/22.x -->
+    <nodeVersion>v22.12.0</nodeVersion>
+    <npmVersion>10.9.0</npmVersion>
     <webExtensionDir>${project.parent.basedir}/web-extension</webExtensionDir>
   </properties>
 
@@ -107,10 +108,11 @@
               <outputDirectory>${project.build.outputDirectory}/webpage-extension</outputDirectory>
               <resources>
                 <resource>
-                  <directory>${webExtensionDir}/dist</directory>
+                  <directory>${webExtensionDir}/dist/bundle</directory>
                   <includes>
-                    <include>**/*.js</include>
-                    <include>**/*.css</include>
+                    <include>*.js</include>
+                    <include>*.css</include>
+                    <include>manifest.txt</include>
                   </includes>
                 </resource>
               </resources>

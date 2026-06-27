@@ -49,10 +49,13 @@ yamcs-web is a compiled Angular app, but it has a first-class extension mechanis
    module, and calls `WebPlugin.addExtension(id, config, staticRoot)`, handing yamcs-web a
    prebuilt web bundle plus the configuration. Yamcs auto-injects the bundle into
    `index.html` and exposes the config to the web app.
-2. **Web extension** (`web-extension/`) — a tiny plain-TypeScript custom element
-   (`<external-webpage>`, built with esbuild → one small JS file). yamcs-web instantiates it
-   at startup to register the sidebar item (with a privilege `condition`), and again for the
-   page route `/<instance>/ext/external-webpage`, where it renders an `<iframe>` of the URL.
+2. **Web extension** (`web-extension/`) — an Angular Elements custom element
+   (`<external-webpage>`) built against `@yamcs/webapp-sdk`. yamcs-web instantiates it at
+   startup to register the sidebar item (with a privilege `condition`), and again for the
+   page route `/<instance>/ext/external-webpage`, where it renders the real yamcs
+   `ya-instance-toolbar` (showing the configured label and the live mission/processor time)
+   above an `<iframe>` of the URL. The toolbar reaches the main app's services through the
+   SDK's `SdkBridge`, wired up by the `YamcsWebExtension` base class.
 
 The plugin name (`external-webpage`), the custom-element tag, and the route id are all the
 same string by design — that linkage wires the three pieces together. The name and URL are
@@ -120,7 +123,7 @@ The script copies the plugin jar into `<yamcs>/lib/` (auto-loaded from the class
 ```
 pom.xml                          Parent Maven project
 plugin/                          Java Yamcs plugin (artifactId = external-webpage)
-web-extension/                   TypeScript custom element (esbuild → dist/external-webpage.js)
+web-extension/                   Angular Elements custom element (ng build → dist/bundle/)
 config/external-webpage.yaml     Config template (installed into etc/)
 install.sh                       Installer for an existing Yamcs home
 docker/                          Multi-stage Dockerfile + compose for the demo
@@ -134,7 +137,7 @@ demo/                            Minimal runnable Yamcs that bundles the plugin 
 ```bash
 cd web-extension
 npm install
-npm run build      # writes dist/external-webpage.js
+npm run build      # ng build + finalize -> dist/bundle/ (main.js + manifest.txt)
 npm run typecheck  # optional type check
 ```
 
@@ -143,14 +146,17 @@ npm run typecheck  # optional type check
 This package ships a single page named `external-webpage`. The displayed name and URL are
 configuration, so you usually only edit `etc/external-webpage.yaml`. To run a *second*,
 independent page (its own sidebar entry and privilege) you need a second plugin with a
-distinct id: change the plugin `artifactId`, the `TAG` constant in
-`web-extension/src/external-webpage.ts`, and the `CONFIG_SUBSYSTEM` in the Java plugin to a
-new hyphenated name, then rebuild — those identifiers must stay equal to each other.
+distinct id: change the plugin `artifactId`, the `TAG` constants in
+`web-extension/src/main.ts` and `web-extension/src/external-webpage.component.ts`, and the
+`CONFIG_SUBSYSTEM` in the Java plugin to a new hyphenated name, then rebuild — those
+identifiers must stay equal to each other.
 
 ## Compatibility
 
-Targets Yamcs **5.13.0**. The web extension depends only on the stable
-`addNavItem` / `getExtraConfig` / `hasSystemPrivilege` surface and bundles no Angular, so it
-is not coupled to the yamcs-web Angular version. `WebPlugin.addExtension` is marked
-`@Experimental` upstream; pin the `yamcsVersion` property in the parent `pom.xml` to match
-your deployment.
+Targets Yamcs **5.13.0**, which ships `@yamcs/webapp-sdk` **1.4.0** on **Angular 21**. Because
+the web extension uses real SDK components (`ya-instance-toolbar`) via the official
+`provideYamcsWebExtension()` helper, it is **version-coupled**: when you move to another Yamcs
+release, update `yamcsVersion` in the parent `pom.xml` **and** the `@yamcs/webapp-sdk` /
+`@angular/*` versions in `web-extension/package.json` to match that release's
+`yamcs-web/src/main/webapp/projects/webapp-sdk/package.json`. `WebPlugin.addExtension` is
+marked `@Experimental` upstream.

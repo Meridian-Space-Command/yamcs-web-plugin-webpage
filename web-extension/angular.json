@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/@angular/cli/lib/config/schema.json",
+  "version": 1,
+  "newProjectRoot": "projects",
+  "projects": {
+    "external-webpage": {
+      "projectType": "application",
+      "root": "",
+      "sourceRoot": "src",
+      "prefix": "ext",
+      "architect": {
+        "build": {
+          "builder": "@angular/build:application",
+          "options": {
+            "outputPath": "dist",
+            "index": "src/index.html",
+            "browser": "src/main.ts",
+            "tsConfig": "tsconfig.app.json",
+            "polyfills": [],
+            "optimization": true,
+            "outputHashing": "none",
+            "sourceMap": false,
+            "namedChunks": false
+          }
+        }
+      }
+    }
+  }
+}

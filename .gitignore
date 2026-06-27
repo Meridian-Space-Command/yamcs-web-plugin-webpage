@@ -4,6 +4,8 @@ target/
 # Node / web build
 web-extension/node_modules/
 web-extension/dist/
+web-extension/.angular/
+web-extension/out-tsc/
 node/
 
 # IDE
