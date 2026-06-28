@@ -1,0 +1,13 @@
+services:
+  yamcs:
+    build:
+      # Build context is the repo root: the image compiles the whole Maven project
+      # (parent + plugin + demo). The Dockerfile and its .dockerignore live here under
+      # demo/docker/ because they only serve the demo.
+      context: ../..
+      dockerfile: demo/docker/Dockerfile
+    image: estrack-yamcs-demo:latest
+    container_name: estrack-yamcs-demo
+    ports:
+      - "8090:8090"
+    restart: unless-stopped

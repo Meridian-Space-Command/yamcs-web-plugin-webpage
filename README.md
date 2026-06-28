@@ -82,7 +82,7 @@ same string by design — that linkage wires the three pieces together. The name
 Runs a self-contained Yamcs (v5.13.0) with the plugin pre-installed, configured as ESTRACK.
 
 ```bash
-docker compose -f docker/docker-compose.yml up --build
+docker compose -f demo/docker/docker-compose.yml up --build
 ```
 
 Then open <http://localhost:8090>, open the **demo** instance, and look for **ESTRACK** at
@@ -155,8 +155,8 @@ plugin/                          Java Yamcs plugin (artifactId = external-webpag
 web-extension/                   Angular Elements custom element (ng build → dist/bundle/)
 config/external-webpage.yaml     Config template (installed into etc/)
 install.sh                       Installer for an existing Yamcs home
-docker/                          Multi-stage Dockerfile + compose for the demo
 demo/                            Minimal runnable Yamcs that bundles the plugin (as ESTRACK)
+demo/docker/                     Multi-stage Dockerfile + compose to run the demo in a container
 ```
 
 ---
