@@ -26,7 +26,8 @@ if [[ -z "$JAR" ]]; then
 fi
 
 NAME="$(basename "$JAR" .jar)"          # e.g. external-webpage-1.0.0-yamcs-5.13.0
-STAGE="$ROOT/dist/$NAME"
+BUNDLE="$NAME-bundle"                    # e.g. external-webpage-1.0.0-yamcs-5.13.0-bundle
+STAGE="$ROOT/dist/$BUNDLE"
 
 rm -rf "$STAGE"
 mkdir -p "$STAGE"
@@ -61,6 +62,6 @@ server runs a different version, use a matching release or rebuild from source.
 Source and docs: https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage
 EOF
 
-( cd "$ROOT/dist" && rm -f "$NAME.zip" && zip -r -q "$NAME.zip" "$NAME" )
-echo "Created dist/$NAME.zip"
-( cd "$ROOT/dist" && unzip -l "$NAME.zip" )
+( cd "$ROOT/dist" && rm -f "$BUNDLE.zip" && zip -r -q "$BUNDLE.zip" "$BUNDLE" )
+echo "Created dist/$BUNDLE.zip"
+( cd "$ROOT/dist" && unzip -l "$BUNDLE.zip" )

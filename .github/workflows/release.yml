@@ -5,7 +5,6 @@ name: release
 #
 # The release gets:
 #   * the "lite" pre-compiled bundle (jar + config + install.sh + INSTALL.md) as a .zip asset
-#   * the plugin jar on its own as an asset
 #   * GitHub's automatic "Source code (zip)" and "Source code (tar.gz)"
 
 on:
@@ -40,5 +39,4 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            dist/*.zip
-            plugin/target/external-webpage-*-yamcs-*.jar
+            dist/*-bundle.zip

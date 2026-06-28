@@ -98,12 +98,12 @@ privilege gates non-superusers.)
 The easiest path: grab a packaged build from the
 [Releases page](https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases).
 Each release attaches a **lite bundle** zip,
-`external-webpage-<ver>-yamcs-<yamcsVer>.zip`, containing just the jar, the config template,
-`install.sh`, and `INSTALL.md` — plus GitHub's automatic "Source code" archives.
+`external-webpage-<ver>-yamcs-<yamcsVer>-bundle.zip`, containing just the jar, the config
+template, `install.sh`, and `INSTALL.md` — plus GitHub's automatic "Source code" archives.
 
 ```bash
-unzip external-webpage-1.0.0-yamcs-5.13.0.zip
-cd external-webpage-1.0.0-yamcs-5.13.0
+unzip external-webpage-1.0.0-yamcs-5.13.0-bundle.zip
+cd external-webpage-1.0.0-yamcs-5.13.0-bundle
 ./install.sh /path/to/your/yamcs      # copies the jar + config into your Yamcs
 ```
 
