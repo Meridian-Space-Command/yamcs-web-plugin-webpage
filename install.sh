@@ -47,15 +47,31 @@ if [[ ! -d "$YAMCS_HOME/lib" || ! -d "$YAMCS_HOME/etc" ]]; then
 fi
 
 if [[ "$BUILD" -eq 1 ]]; then
+  if [[ ! -f "$SCRIPT_DIR/plugin/pom.xml" ]]; then
+    echo "ERROR: --build can only be used from a source checkout (plugin/pom.xml not found)." >&2
+    exit 1
+  fi
   echo ">> Building plugin (mvn -pl plugin -am package)..."
   (cd "$SCRIPT_DIR" && mvn -q -pl plugin -am -DskipTests package)
 fi
 
-JAR="$(ls -1 "$SCRIPT_DIR"/plugin/target/external-webpage-*.jar 2>/dev/null | grep -v -- '-sources\|-javadoc' | head -n1 || true)"
+# Find the jar. Works both in a source checkout (plugin/target/) and inside a flat
+# pre-compiled release bundle (jar sitting next to this script).
+JAR="$(ls -1 \
+  "$SCRIPT_DIR"/external-webpage-*.jar \
+  "$SCRIPT_DIR"/plugin/target/external-webpage-*.jar \
+  2>/dev/null | grep -v -- '-sources\|-javadoc' | head -n1 || true)"
 if [[ -z "$JAR" ]]; then
-  echo "ERROR: plugin jar not found under plugin/target/. Run with --build, or run 'mvn package' first." >&2
+  echo "ERROR: plugin jar not found (looked next to this script and in plugin/target/)." >&2
+  echo "       In a source checkout, run with --build or 'mvn -pl plugin -am package' first." >&2
   exit 1
 fi
+
+# Find the config template the same way (flat bundle, then source checkout).
+CONFIG_SRC=""
+for c in "$SCRIPT_DIR/external-webpage.yaml" "$SCRIPT_DIR/config/external-webpage.yaml"; do
+  if [[ -f "$c" ]]; then CONFIG_SRC="$c"; break; fi
+done
 
 echo ">> Installing plugin jar:"
 echo "     $JAR"
@@ -67,9 +83,11 @@ cp "$JAR" "$YAMCS_HOME/lib/"
 CONFIG_DST="$YAMCS_HOME/etc/external-webpage.yaml"
 if [[ -e "$CONFIG_DST" ]]; then
   echo ">> Config already exists, leaving it untouched: $CONFIG_DST"
-else
+elif [[ -n "$CONFIG_SRC" ]]; then
   echo ">> Installing config: $CONFIG_DST"
-  cp "$SCRIPT_DIR/config/external-webpage.yaml" "$CONFIG_DST"
+  cp "$CONFIG_SRC" "$CONFIG_DST"
+else
+  echo ">> WARNING: config template not found; create $CONFIG_DST manually (label + url)."
 fi
 
 cat <<EOF

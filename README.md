@@ -93,7 +93,34 @@ privilege gates non-superusers.)
 
 ---
 
-## Installing into an existing Yamcs deployment
+## Install from a pre-compiled release (no build)
+
+The easiest path: grab a packaged build from the
+[Releases page](https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases).
+Each release attaches a **lite bundle** zip,
+`external-webpage-<ver>-yamcs-<yamcsVer>.zip`, containing just the jar, the config template,
+`install.sh`, and `INSTALL.md` — plus GitHub's automatic "Source code" archives.
+
+```bash
+unzip external-webpage-1.0.0-yamcs-5.13.0.zip
+cd external-webpage-1.0.0-yamcs-5.13.0
+./install.sh /path/to/your/yamcs      # copies the jar + config into your Yamcs
+```
+
+Pick the release whose `yamcs-<ver>` suffix matches your server's Yamcs version.
+
+**Cutting a release** (maintainers): push a version tag and the
+[`release` workflow](.github/workflows/release.yml) builds and publishes everything:
+
+```bash
+git tag v1.0.0 && git push origin v1.0.0
+```
+
+Or build the bundle locally with `bash scripts/package-release.sh` (output in `dist/`).
+
+---
+
+## Installing from source
 
 Requirements: JDK 17+, Maven, and (for the build) network access to download Maven and Node
 artifacts.

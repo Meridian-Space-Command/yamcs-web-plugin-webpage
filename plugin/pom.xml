@@ -47,8 +47,14 @@
   </dependencies>
 
   <build>
+    <!--
+      Distributable jar name includes the target Yamcs version, since the plugin is
+      version-coupled to it. This only renames the file in target/ (used by install.sh);
+      the Maven coordinates used for dependency resolution are unchanged.
+    -->
+    <finalName>${project.artifactId}-${project.version}-yamcs-${yamcsVersion}</finalName>
     <plugins>
-      <!-- Build the TypeScript custom element into web-extension/dist/external-webpage.js -->
+      <!-- Build the Angular Elements bundle into web-extension/dist/bundle/ -->
       <plugin>
         <groupId>com.github.eirslett</groupId>
         <artifactId>frontend-maven-plugin</artifactId>

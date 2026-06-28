@@ -1,5 +1,13 @@
-# Maven
+# Maven build output...
 target/
+# ...but keep the prebuilt, ready-to-install plugin jar (so the repo ships pre-compiled).
+# This is the only build artifact tracked; everything else under target/ stays ignored.
+!plugin/target/
+plugin/target/*
+!plugin/target/external-webpage-*-yamcs-*.jar
+
+# Release staging output (assets are uploaded to GitHub Releases, not committed)
+/dist/
 
 # Node / web build
 web-extension/node_modules/

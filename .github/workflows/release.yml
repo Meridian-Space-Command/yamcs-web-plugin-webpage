@@ -1,0 +1,44 @@
+name: release
+
+# Publish a GitHub Release when a version tag is pushed, e.g.:
+#   git tag v1.0.0 && git push origin v1.0.0
+#
+# The release gets:
+#   * the "lite" pre-compiled bundle (jar + config + install.sh + INSTALL.md) as a .zip asset
+#   * the plugin jar on its own as an asset
+#   * GitHub's automatic "Source code (zip)" and "Source code (tar.gz)"
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+          cache: maven
+
+      - name: Build plugin (also builds the Angular web bundle)
+        run: mvn -B -ntp -pl plugin -am -DskipTests package
+
+      - name: Package the lite bundle
+        run: bash scripts/package-release.sh
+
+      - name: Publish release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            dist/*.zip
+            plugin/target/external-webpage-*-yamcs-*.jar
