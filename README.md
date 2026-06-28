@@ -8,6 +8,8 @@ visibility is gated by a Yamcs **system privilege**.
 The bundled Docker demo configures it as **ESTRACK** → <https://estracknow.esa.int/>, but
 that is just example configuration; point it at any site you like.
 
+![Example: the plugin configured as ESTRACK — an "ESTRACK" item in the yamcs-web sidebar opening ESA's ESTRACK NOW page in the main view, with the standard instance toolbar (label + live mission time) on top.](example.png)
+
 ---
 
 ## Configuring the name and URL
