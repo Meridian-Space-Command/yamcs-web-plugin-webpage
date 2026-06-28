@@ -1,10 +1,5 @@
-# Maven build output...
+# Maven build output (pre-compiled jars are published to GitHub Releases, not committed)
 target/
-# ...but keep the prebuilt, ready-to-install plugin jar (so the repo ships pre-compiled).
-# This is the only build artifact tracked; everything else under target/ stays ignored.
-!plugin/target/
-plugin/target/*
-!plugin/target/external-webpage-*-yamcs-*.jar
 
 # Release staging output (assets are uploaded to GitHub Releases, not committed)
 /dist/
