@@ -17,6 +17,7 @@ url: https://example.com/
 
 # System privilege required to see the item. The plugin registers this privilege
 # with the security module so it can be assigned to roles. Superusers always see it.
+# Set to "*" (or leave blank) to make the item visible to ALL users (no privilege gate).
 privilege: web.ExternalPage
 
 # Sidebar group. 'archive' renders the item as a standalone entry at the bottom of

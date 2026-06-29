@@ -19,7 +19,7 @@ Everything user-facing lives in one config file, **`etc/external-webpage.yaml`**
 ```yaml
 label: My Page                 # <- the name shown in the sidebar
 url: https://example.com/      # <- the page embedded in the main area
-privilege: web.ExternalPage    # who may see it (assignable to roles; superusers always do)
+privilege: web.ExternalPage    # who may see it ("*" or blank = all users; superusers always do)
 group: archive                 # sidebar group (archive recommended)
 icon: public                   # Material Symbols icon name
 order: 0                       # sort hint among extension items
@@ -34,7 +34,7 @@ the copy in your deployment's `etc/`).
 |-------------|----------|--------------------|--------------------------------------------|
 | `label`     | yes      | —                  | Sidebar text (the name).                   |
 | `url`       | yes      | —                  | External page embedded in an iframe.       |
-| `privilege` | no       | `web.ExternalPage` | System privilege required to see the item. |
+| `privilege` | no       | `web.ExternalPage` | Privilege required to see the item; `"*"` or blank = all users. |
 | `group`     | no       | `archive`          | Sidebar group; `archive` is recommended.   |
 | `icon`      | no       | `public`           | Material Symbols icon name.                |
 | `order`     | no       | `0`                | Sort hint among extension items.           |
@@ -107,9 +107,9 @@ Download with a redirect-following client (`wget`, or `curl -L` — a plain `cur
 `-L` saves an empty/HTML stub and `unzip` then fails):
 
 ```bash
-wget https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases/download/v1.0.1/external-webpage-1.0.1-yamcs-5.13.0-bundle.zip
-unzip external-webpage-1.0.1-yamcs-5.13.0-bundle.zip
-cd external-webpage-1.0.1-yamcs-5.13.0-bundle
+wget https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases/download/v1.0.2/external-webpage-1.0.2-yamcs-5.13.0-bundle.zip
+unzip external-webpage-1.0.2-yamcs-5.13.0-bundle.zip
+cd external-webpage-1.0.2-yamcs-5.13.0-bundle
 
 # install, setting the sidebar name + URL in one go:
 ./install.sh --label "ESTRACK" --url "https://estracknow.esa.int/" /path/to/your/yamcs

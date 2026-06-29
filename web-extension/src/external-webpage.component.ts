@@ -103,9 +103,14 @@ export class ExternalWebpageComponent extends YamcsWebExtension {
       label: cfg.label,
       icon: cfg.icon || 'public',
       order: cfg.order ?? 0,
-      // Permission gate: only users with this system privilege (or superusers) see the item.
-      condition: (user: User) => user.hasSystemPrivilege(cfg.privilege),
     };
+
+    // Permission gate: only users with this system privilege (or superusers) see the item.
+    // A blank privilege or '*' means "no gate" -> visible to all users.
+    const privilege = (cfg.privilege || '').trim();
+    if (privilege !== '' && privilege !== '*') {
+      item.condition = (user: User) => user.hasSystemPrivilege(privilege);
+    }
 
     // The 'archive' group renders extension items as standalone entries at the bottom
     // of the instance sidebar with a correct '/ext/<id>' link.

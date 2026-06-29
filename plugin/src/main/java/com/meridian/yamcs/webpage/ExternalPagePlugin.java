@@ -91,9 +91,13 @@ public class ExternalPagePlugin extends AbstractPlugin {
         String icon = config.getString("icon", DEFAULT_ICON);
         int order = config.getInt("order", 0);
 
-        // Register the privilege so it becomes assignable to roles in the security module.
-        // Superusers always pass the check; everybody else needs this privilege to see the item.
-        yamcs.getSecurityStore().addSystemPrivilege(new SystemPrivilege(privilege));
+        // A blank privilege or '*' means "no gate": the item is visible to all users, so no
+        // privilege is registered. Otherwise register it so it is assignable to roles in the
+        // security module (superusers always pass the check; everyone else needs the privilege).
+        boolean gated = !privilege.isBlank() && !"*".equals(privilege.trim());
+        if (gated) {
+            yamcs.getSecurityStore().addSystemPrivilege(new SystemPrivilege(privilege));
+        }
 
         // Passed through to the web app and read by the extension at runtime, so the label
         // and URL can be changed in etc/external-webpage.yaml without rebuilding anything.
@@ -111,8 +115,8 @@ public class ExternalPagePlugin extends AbstractPlugin {
         // matching custom element <external-webpage>.
         webPlugin.addExtension(pluginName, extensionConfig, staticRoot);
 
-        log.info("Registered external-page extension '{}' -> {} (privilege: {}, group: {})",
-                label, url, privilege, group);
+        log.info("Registered external-page extension '{}' -> {} ({}, group: {})",
+                label, url, gated ? "privilege: " + privilege : "visible to all users", group);
     }
 
     /**
