@@ -103,13 +103,33 @@ Each release attaches a **lite bundle** zip,
 `external-webpage-<ver>-yamcs-<yamcsVer>-bundle.zip`, containing just the jar, the config
 template, `install.sh`, and `INSTALL.md` — plus GitHub's automatic "Source code" archives.
 
+Download with a redirect-following client (`wget`, or `curl -L` — a plain `curl` without
+`-L` saves an empty/HTML stub and `unzip` then fails):
+
 ```bash
+wget https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases/download/v1.0.0/external-webpage-1.0.0-yamcs-5.13.0-bundle.zip
 unzip external-webpage-1.0.0-yamcs-5.13.0-bundle.zip
 cd external-webpage-1.0.0-yamcs-5.13.0-bundle
-./install.sh /path/to/your/yamcs      # copies the jar + config into your Yamcs
+
+# install, setting the sidebar name + URL in one go:
+./install.sh --label "ESTRACK" --url "https://estracknow.esa.int/" /path/to/your/yamcs
 ```
 
 Pick the release whose `yamcs-<ver>` suffix matches your server's Yamcs version.
+
+### Setting the name and URL
+
+`install.sh` writes the config to `<yamcs>/etc/external-webpage.yaml`. Pass values to fill it
+in (otherwise edit that file by hand afterwards):
+
+| Flag                | Sets             | Config key  |
+|---------------------|------------------|-------------|
+| `--label "<text>"`  | sidebar name     | `label`     |
+| `--url "<url>"`     | embedded page    | `url`       |
+| `--privilege "<p>"` | required privilege | `privilege` |
+
+Flags are applied each run, so you can also use it to update an existing install
+(`./install.sh --url "https://new.example/" /path/to/your/yamcs`).
 
 **Cutting a release** (maintainers): push a version tag and the
 [`release` workflow](.github/workflows/release.yml) builds and publishes everything:

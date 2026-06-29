@@ -45,13 +45,17 @@ It is compiled for the Yamcs version named in the jar file:
 
     $NAME.jar
 
-Install it into an existing Yamcs deployment (the directory containing bin/, etc/, lib/):
+Install it into an existing Yamcs deployment (the directory containing bin/, etc/, lib/),
+setting the sidebar name and URL in one go:
 
-    ./install.sh /path/to/your/yamcs
+    ./install.sh --label "My Page" --url "https://example.com/" /path/to/your/yamcs
+
+(Omit the flags to edit \`<yamcs>/etc/external-webpage.yaml\` by hand instead. Add
+\`--privilege "<name>"\` to change the required system privilege.)
 
 Then:
 
-  1. Edit \`<yamcs>/etc/external-webpage.yaml\` to set the sidebar \`label\` (name) and \`url\`.
+  1. Review \`<yamcs>/etc/external-webpage.yaml\` (\`label\` = name, \`url\` = embedded page).
   2. Grant the configured privilege (default \`web.ExternalPage\`) to a role, or sign in
      as a superuser. Without it, the sidebar item stays hidden.
   3. Restart Yamcs. Open an instance in yamcs-web; the item is at the bottom of the sidebar.

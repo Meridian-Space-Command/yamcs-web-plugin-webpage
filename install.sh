@@ -3,41 +3,59 @@
 # Install the external-webpage plugin into an existing Yamcs deployment.
 #
 # Usage:
-#   ./install.sh [--build] <YAMCS_HOME>
+#   ./install.sh [options] <YAMCS_HOME>
 #
-#   <YAMCS_HOME>   Path to a Yamcs installation (the directory containing bin/, etc/, lib/).
-#   --build        Run the Maven build first (requires JDK 17+ and network access for
-#                  Maven + Node downloads). Omit if you have already run `mvn package`.
+#   <YAMCS_HOME>        Path to a Yamcs installation (the dir containing bin/, etc/, lib/).
+#
+# Options:
+#   --label "<text>"   Set the sidebar name in the config (replaces the placeholder).
+#   --url "<url>"      Set the embedded page URL in the config.
+#   --privilege "<p>"  Set the system privilege required to see the item.
+#   --build            Build the plugin with Maven first (source checkout only; needs JDK 17+).
+#   -h, --help         Show this help.
 #
 # What it does:
 #   * copies the plugin jar into <YAMCS_HOME>/lib/   (auto-loaded from the classpath)
-#   * copies config/external-webpage.yaml into <YAMCS_HOME>/etc/   (if not already present)
+#   * installs external-webpage.yaml into <YAMCS_HOME>/etc/ (if not already present)
+#   * if --label/--url/--privilege are given, writes those values into the config
 #
-# Before (or after) installing, edit the config file to set the sidebar 'label' (name)
-# and 'url'. Then assign the configured privilege (default 'web.ExternalPage') to a role
-# (or rely on superuser access) and restart Yamcs.
+# Examples:
+#   ./install.sh /opt/yamcs
+#   ./install.sh --label "ESTRACK" --url "https://estracknow.esa.int/" /opt/yamcs
+#
+# After installing, grant the privilege (default 'web.ExternalPage') to a role or sign in
+# as a superuser, then restart Yamcs.
 
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
+usage() { sed -n '3,27p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+
 BUILD=0
 YAMCS_HOME=""
+LABEL=""
+URL=""
+PRIVILEGE=""
 
-for arg in "$@"; do
-  case "$arg" in
-    --build) BUILD=1 ;;
-    -h|--help)
-      sed -n '2,20p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'
-      exit 0
-      ;;
-    *) YAMCS_HOME="$arg" ;;
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --build) BUILD=1; shift ;;
+    --label) LABEL="${2:-}"; shift 2 ;;
+    --label=*) LABEL="${1#*=}"; shift ;;
+    --url) URL="${2:-}"; shift 2 ;;
+    --url=*) URL="${1#*=}"; shift ;;
+    --privilege) PRIVILEGE="${2:-}"; shift 2 ;;
+    --privilege=*) PRIVILEGE="${1#*=}"; shift ;;
+    -h|--help) usage; exit 0 ;;
+    -*) echo "ERROR: unknown option '$1'" >&2; usage >&2; exit 1 ;;
+    *) YAMCS_HOME="$1"; shift ;;
   esac
 done
 
 if [[ -z "$YAMCS_HOME" ]]; then
   echo "ERROR: missing <YAMCS_HOME> argument." >&2
-  echo "Usage: ./install.sh [--build] <YAMCS_HOME>" >&2
+  usage >&2
   exit 1
 fi
 
@@ -45,6 +63,16 @@ if [[ ! -d "$YAMCS_HOME/lib" || ! -d "$YAMCS_HOME/etc" ]]; then
   echo "ERROR: '$YAMCS_HOME' does not look like a Yamcs home (missing lib/ or etc/)." >&2
   exit 1
 fi
+
+# Set a top-level scalar key in a YAML file: 'key: value'. Uses '|' as the sed
+# delimiter and escapes the replacement so values containing '/', '&', '\', or '|'
+# (e.g. URLs) are handled. Writes via a temp file for macOS/Linux portability.
+set_yaml_value() {
+  local file="$1" key="$2" value="$3" esc tmp
+  esc=$(printf '%s' "$value" | sed -e 's/[&|\\]/\\&/g')
+  tmp=$(mktemp)
+  sed "s|^${key}:.*|${key}: ${esc}|" "$file" > "$tmp" && mv "$tmp" "$file"
+}
 
 if [[ "$BUILD" -eq 1 ]]; then
   if [[ ! -f "$SCRIPT_DIR/plugin/pom.xml" ]]; then
@@ -82,7 +110,7 @@ cp "$JAR" "$YAMCS_HOME/lib/"
 
 CONFIG_DST="$YAMCS_HOME/etc/external-webpage.yaml"
 if [[ -e "$CONFIG_DST" ]]; then
-  echo ">> Config already exists, leaving it untouched: $CONFIG_DST"
+  echo ">> Config already exists, keeping: $CONFIG_DST"
 elif [[ -n "$CONFIG_SRC" ]]; then
   echo ">> Installing config: $CONFIG_DST"
   cp "$CONFIG_SRC" "$CONFIG_DST"
@@ -90,10 +118,17 @@ else
   echo ">> WARNING: config template not found; create $CONFIG_DST manually (label + url)."
 fi
 
+# Apply any provided overrides to the installed config.
+if [[ -e "$CONFIG_DST" ]]; then
+  if [[ -n "$LABEL" ]];     then set_yaml_value "$CONFIG_DST" label "$LABEL";         echo ">> set label:     $LABEL"; fi
+  if [[ -n "$URL" ]];       then set_yaml_value "$CONFIG_DST" url "$URL";             echo ">> set url:       $URL"; fi
+  if [[ -n "$PRIVILEGE" ]]; then set_yaml_value "$CONFIG_DST" privilege "$PRIVILEGE"; echo ">> set privilege: $PRIVILEGE"; fi
+fi
+
 cat <<EOF
 
 Done. Next steps:
-  1. Edit $CONFIG_DST to set the sidebar 'label' (name) and 'url'.
+  1. Review $CONFIG_DST (set 'label' and 'url' if you did not pass --label/--url).
   2. Grant the configured system privilege (default 'web.ExternalPage') to a role in
      your security config, or sign in as a superuser. Without it, the item stays hidden.
   3. Restart Yamcs. Open an instance in yamcs-web and look for the item in the
