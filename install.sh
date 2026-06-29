@@ -64,12 +64,14 @@ if [[ ! -d "$YAMCS_HOME/lib" || ! -d "$YAMCS_HOME/etc" ]]; then
   exit 1
 fi
 
-# Set a top-level scalar key in a YAML file: 'key: value'. Uses '|' as the sed
-# delimiter and escapes the replacement so values containing '/', '&', '\', or '|'
-# (e.g. URLs) are handled. Writes via a temp file for macOS/Linux portability.
+# Set a top-level scalar key in a YAML file: 'key: "value"'. The value is written as a
+# double-quoted YAML scalar so YAML-special values (e.g. '*', URLs, anything with ':' or
+# leading symbols) are safe. Escapes \ and " for YAML, then &, |, \ for the sed replacement.
+# Writes via a temp file for macOS/Linux portability.
 set_yaml_value() {
-  local file="$1" key="$2" value="$3" esc tmp
-  esc=$(printf '%s' "$value" | sed -e 's/[&|\\]/\\&/g')
+  local file="$1" key="$2" value="$3" yaml esc tmp
+  yaml=$(printf '%s' "$value" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g')   # YAML-escape \ and "
+  esc=$(printf '"%s"' "$yaml" | sed -e 's/[&|\\]/\\&/g')               # sed-escape & | \
   tmp=$(mktemp)
   sed "s|^${key}:.*|${key}: ${esc}|" "$file" > "$tmp" && mv "$tmp" "$file"
 }

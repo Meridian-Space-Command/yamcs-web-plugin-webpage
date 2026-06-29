@@ -107,9 +107,9 @@ Download with a redirect-following client (`wget`, or `curl -L` — a plain `cur
 `-L` saves an empty/HTML stub and `unzip` then fails):
 
 ```bash
-wget https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases/download/v1.0.2/external-webpage-1.0.2-yamcs-5.13.0-bundle.zip
-unzip external-webpage-1.0.2-yamcs-5.13.0-bundle.zip
-cd external-webpage-1.0.2-yamcs-5.13.0-bundle
+wget https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases/download/v1.0.3/external-webpage-1.0.3-yamcs-5.13.0-bundle.zip
+unzip external-webpage-1.0.3-yamcs-5.13.0-bundle.zip
+cd external-webpage-1.0.3-yamcs-5.13.0-bundle
 
 # install, setting the sidebar name + URL in one go:
 ./install.sh --label "ESTRACK" --url "https://estracknow.esa.int/" /path/to/your/yamcs
