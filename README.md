@@ -12,32 +12,45 @@ that is just example configuration; point it at any site you like.
 
 ---
 
-## Configuring the name and URL
+## Configuring the pages
 
-Everything user-facing lives in one config file, **`etc/external-webpage.yaml`**:
+Everything user-facing lives in one config file, **`etc/external-webpage.yaml`**. For a
+single page, set top-level `label:`/`url:` keys. For **several pages**, use a `pages:` list —
+each entry becomes a sidebar item (in list order) that embeds its URL:
 
 ```yaml
-label: My Page                 # <- the name shown in the sidebar
-url: https://example.com/      # <- the page embedded in the main area
-privilege: web.ExternalPage    # who may see it ("*" or blank = all users; superusers always do)
-group: archive                 # sidebar group (archive recommended)
-icon: public                   # Material Symbols icon name
-order: 0                       # sort hint among extension items
+pages:
+  - label: ESTRACK                       # name shown in the sidebar
+    url: https://estracknow.esa.int/     # page embedded in the main view
+    privilege: "*"                       # "*"/blank = all users (default)
+    icon: public                         # Material Symbols icon
+
+  - label: Mission Wiki
+    url: https://wiki.example.org/
+    privilege: web.Wiki                  # only users with this privilege see it
+    icon: menu_book
+
+group: archive                           # applies to all pages (per-page override allowed)
 ```
 
-`label` and `url` are read by Yamcs at startup and passed to the web UI, so editing them and
-restarting is all it takes — no recompilation. You can set them **before installing** (edit
+These values are read by Yamcs at startup and passed to the web UI, so editing them and
+restarting is all it takes — no recompilation. Set them **before installing** (edit
 `config/external-webpage.yaml`, which the installer copies into `etc/`) or **after** (edit
 the copy in your deployment's `etc/`).
 
-| Key         | Required | Default            | Description                                |
-|-------------|----------|--------------------|--------------------------------------------|
-| `label`     | yes      | —                  | Sidebar text (the name).                   |
-| `url`       | yes      | —                  | External page embedded in an iframe.       |
-| `privilege` | no       | `web.ExternalPage` | Privilege required to see the item; `"*"` or blank = all users. |
-| `group`     | no       | `archive`          | Sidebar group; `archive` is recommended.   |
-| `icon`      | no       | `public`           | Material Symbols icon name.                |
-| `order`     | no       | `0`                | Sort hint among extension items.           |
+Per-page keys:
+
+| Key         | Required | Default     | Description                                              |
+|-------------|----------|-------------|----------------------------------------------------------|
+| `label`     | yes      | —           | Sidebar text (the name).                                 |
+| `url`       | yes      | —           | External page embedded in an iframe.                     |
+| `privilege` | no       | all users   | Privilege required to see the item; omit / blank / `"*"` = all users. |
+| `icon`      | no       | `public`    | Material Symbols icon name.                              |
+| `group`     | no       | top `group` | Sidebar group; `archive` is recommended.                 |
+| `order`     | no       | list index  | Sort hint; defaults to the page's position in the list.  |
+
+Sidebar order follows the list order. (`install.sh`'s `--label`/`--url`/`--privilege` flags
+fill in the single-page form; for multiple pages, edit the `pages:` list directly.)
 
 ---
 
@@ -53,11 +66,11 @@ yamcs-web is a compiled Angular app, but it has a first-class extension mechanis
    `index.html` and exposes the config to the web app.
 2. **Web extension** (`web-extension/`) — an Angular Elements custom element
    (`<external-webpage>`) built against `@yamcs/webapp-sdk`. yamcs-web instantiates it at
-   startup to register the sidebar item (with a privilege `condition`), and again for the
-   page route `/<instance>/ext/external-webpage`, where it renders the real yamcs
-   `ya-instance-toolbar` (showing the configured label and the live mission/processor time)
-   above an `<iframe>` of the URL. The toolbar reaches the main app's services through the
-   SDK's `SdkBridge`, wired up by the `YamcsWebExtension` base class.
+   startup to register a sidebar item **per configured page** (each with its own privilege
+   `condition`), and again for each page route `/<instance>/ext/external-webpage/<page>`,
+   where it renders the real yamcs `ya-instance-toolbar` (showing that page's label and the
+   live mission/processor time) above an `<iframe>` of its URL. The toolbar reaches the main
+   app's services through the SDK's `SdkBridge`, wired up by the `YamcsWebExtension` base.
 
 The plugin name (`external-webpage`), the custom-element tag, and the route id are all the
 same string by design — that linkage wires the three pieces together. The name and URL are
@@ -107,9 +120,9 @@ Download with a redirect-following client (`wget`, or `curl -L` — a plain `cur
 `-L` saves an empty/HTML stub and `unzip` then fails):
 
 ```bash
-wget https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases/download/v1.0.3/external-webpage-1.0.3-yamcs-5.13.0-bundle.zip
-unzip external-webpage-1.0.3-yamcs-5.13.0-bundle.zip
-cd external-webpage-1.0.3-yamcs-5.13.0-bundle
+wget https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases/download/v1.1.0/external-webpage-1.1.0-yamcs-5.13.0-bundle.zip
+unzip external-webpage-1.1.0-yamcs-5.13.0-bundle.zip
+cd external-webpage-1.1.0-yamcs-5.13.0-bundle
 
 # install, setting the sidebar name + URL in one go:
 ./install.sh --label "ESTRACK" --url "https://estracknow.esa.int/" /path/to/your/yamcs

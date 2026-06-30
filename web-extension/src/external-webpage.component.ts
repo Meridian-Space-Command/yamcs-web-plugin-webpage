@@ -14,26 +14,42 @@ const TAG = 'external-webpage';
 interface PageConfig {
   label: string;
   url: string;
-  privilege: string;
+  privilege?: string;
   group?: NavGroup;
   icon?: string;
   order?: number;
 }
 
-// Guard so the nav item is registered exactly once, even if the element is
+interface ExtensionConfig {
+  // Current format: a list of pages.
+  pages?: PageConfig[];
+  // Legacy single-page format (top-level keys) — still accepted.
+  label?: string;
+  url?: string;
+  privilege?: string;
+  group?: NavGroup;
+  icon?: string;
+  order?: number;
+}
+
+interface ResolvedPage extends PageConfig {
+  key: string; // stable URL segment, used as the route subroute
+}
+
+// Guard so nav items are registered exactly once, even if the element is
 // instantiated multiple times over the app's lifetime.
-let navItemRegistered = false;
+let navItemsRegistered = false;
 
 /**
- * yamcs-web extension page that embeds an external webpage, using the real
- * `ya-instance-toolbar` for the header (label on the left, live mission time on the
- * right). Services for the toolbar are provided through the SdkBridge, which the
- * {@link YamcsWebExtension} base populates from the main application when it injects
- * `extensionService` onto this element.
+ * yamcs-web extension that embeds one or more external webpages. Each configured page
+ * becomes a sidebar item; clicking it routes to /<instance>/ext/external-webpage/<key>
+ * and renders the real `ya-instance-toolbar` (page label + live mission time) above an
+ * iframe of that page's URL.
  *
- * The same element is used twice by yamcs-web (see main.ts):
- *  - as a hidden startup initializer (no `subroute`) -> registers the sidebar nav item;
- *  - as the routed page (`subroute` is set) -> renders the toolbar + iframe.
+ * The same element is used by yamcs-web both as a hidden startup initializer (no
+ * `subroute` -> registers all sidebar items) and as the routed page (`subroute` is the
+ * page key -> renders that page). Services for the toolbar come from the SdkBridge, which
+ * the {@link YamcsWebExtension} base populates from the main application.
  */
 @Component({
   selector: 'ext-external-webpage',
@@ -75,45 +91,95 @@ export class ExternalWebpageComponent extends YamcsWebExtension {
   safeUrl = signal<SafeResourceUrl | null>(null);
 
   onExtensionInit(): void {
-    const cfg = this.configService.getExtraConfig(TAG) as PageConfig | undefined;
-    if (!cfg || !cfg.url) {
+    const pages = this.resolvePages();
+    if (pages.length === 0) {
       console.error(
-        `[${TAG}] No extension configuration found. Is the plugin configured in etc/external-webpage.yaml?`,
+        `[${TAG}] No pages configured. Define a 'pages' list (or a top-level label/url) in etc/external-webpage.yaml.`,
       );
       return;
     }
 
     if (this.subroute === undefined) {
-      this.registerNavItem(cfg);
+      this.registerNavItems(pages);
     } else {
-      this.label.set(cfg.label);
-      this.safeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(cfg.url));
+      // Routed page: pick the page matching the subroute key (fall back to the first).
+      const page = pages.find((p) => p.key === this.subroute) ?? pages[0];
+      this.label.set(page.label);
+      this.safeUrl.set(this.sanitizer.bypassSecurityTrustResourceUrl(page.url));
       this.showPage.set(true);
     }
   }
 
-  private registerNavItem(cfg: PageConfig) {
-    if (navItemRegistered) {
+  /** Normalises the config (list or legacy single-page) into a list with stable keys. */
+  private resolvePages(): ResolvedPage[] {
+    const cfg = this.configService.getExtraConfig(TAG) as ExtensionConfig | undefined;
+    if (!cfg) {
+      return [];
+    }
+
+    let raw: PageConfig[];
+    if (Array.isArray(cfg.pages)) {
+      raw = cfg.pages;
+    } else if (cfg.url) {
+      // Legacy single-page format (top-level keys).
+      raw = [
+        {
+          label: cfg.label ?? cfg.url,
+          url: cfg.url,
+          privilege: cfg.privilege,
+          group: cfg.group,
+          icon: cfg.icon,
+          order: cfg.order,
+        },
+      ];
+    } else {
+      raw = [];
+    }
+    raw = raw.filter((p) => p && p.url);
+
+    const usedKeys = new Set<string>();
+    return raw.map((p, index) => {
+      let key = this.slug(p.label) || `page-${index}`;
+      if (usedKeys.has(key)) {
+        key = `${key}-${index}`;
+      }
+      usedKeys.add(key);
+      return { ...p, key };
+    });
+  }
+
+  private registerNavItems(pages: ResolvedPage[]) {
+    if (navItemsRegistered) {
       return;
     }
-    navItemRegistered = true;
+    navItemsRegistered = true;
 
-    const item: NavItem = {
-      path: `ext/${TAG}`,
-      label: cfg.label,
-      icon: cfg.icon || 'public',
-      order: cfg.order ?? 0,
-    };
+    pages.forEach((page, index) => {
+      const item: NavItem = {
+        path: `ext/${TAG}/${page.key}`,
+        label: page.label,
+        icon: page.icon || 'public',
+        order: page.order ?? index,
+      };
 
-    // Permission gate: only users with this system privilege (or superusers) see the item.
-    // A blank privilege or '*' means "no gate" -> visible to all users.
-    const privilege = (cfg.privilege || '').trim();
-    if (privilege !== '' && privilege !== '*') {
-      item.condition = (user: User) => user.hasSystemPrivilege(privilege);
-    }
+      // Permission gate: only users with this system privilege (or superusers) see the item.
+      // A blank privilege or '*' means "no gate" -> visible to all users.
+      const privilege = (page.privilege || '').trim();
+      if (privilege !== '' && privilege !== '*') {
+        item.condition = (user: User) => user.hasSystemPrivilege(privilege);
+      }
 
-    // The 'archive' group renders extension items as standalone entries at the bottom
-    // of the instance sidebar with a correct '/ext/<id>' link.
-    this.extensionService.addNavItem(cfg.group || 'archive', item);
+      // The 'archive' group renders extension items as standalone entries at the bottom
+      // of the instance sidebar with a correct '/ext/<id>/<key>' link.
+      this.extensionService.addNavItem(page.group || 'archive', item);
+    });
+  }
+
+  /** lowercase, hyphenated slug usable as a single URL segment. */
+  private slug(value: string): string {
+    return (value || '')
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '');
   }
 }

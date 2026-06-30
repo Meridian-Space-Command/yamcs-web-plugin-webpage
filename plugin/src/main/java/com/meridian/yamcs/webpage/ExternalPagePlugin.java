@@ -9,6 +9,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -51,7 +52,6 @@ public class ExternalPagePlugin extends AbstractPlugin {
     /** Standalone config file name: resolves to {@code etc/external-webpage.yaml}. */
     private static final String CONFIG_SUBSYSTEM = "external-webpage";
 
-    private static final String DEFAULT_PRIVILEGE = "web.ExternalPage";
     private static final String DEFAULT_GROUP = "archive";
     private static final String DEFAULT_ICON = "public";
 
@@ -79,35 +79,59 @@ public class ExternalPagePlugin extends AbstractPlugin {
             return;
         }
 
-        if (!config.containsKey("label") || !config.containsKey("url")) {
-            throw new PluginException(
-                    "etc/" + CONFIG_SUBSYSTEM + ".yaml must define both 'label' and 'url'.");
+        // Resolve the list of pages. Either an explicit 'pages:' list, or a single page from
+        // top-level 'label'/'url'/... keys (backward compatible with the original config).
+        String topGroup = config.getString("group", DEFAULT_GROUP);
+        List<YConfiguration> pageConfigs;
+        if (config.containsKey("pages")) {
+            pageConfigs = config.getConfigList("pages");
+        } else if (config.containsKey("label") && config.containsKey("url")) {
+            pageConfigs = List.of(config);
+        } else {
+            throw new PluginException("etc/" + CONFIG_SUBSYSTEM
+                    + ".yaml must define a 'pages' list (or a top-level 'label' and 'url').");
         }
 
-        String label = config.getString("label");
-        String url = config.getString("url");
-        String privilege = config.getString("privilege", DEFAULT_PRIVILEGE);
-        String group = config.getString("group", DEFAULT_GROUP);
-        String icon = config.getString("icon", DEFAULT_ICON);
-        int order = config.getInt("order", 0);
+        var pages = new ArrayList<Map<String, Object>>();
+        var labels = new ArrayList<String>();
+        var registeredPrivileges = new HashSet<String>();
+        int index = 0;
+        for (YConfiguration p : pageConfigs) {
+            if (!p.containsKey("label") || !p.containsKey("url")) {
+                throw new PluginException("Each page in etc/" + CONFIG_SUBSYSTEM
+                        + ".yaml must define 'label' and 'url'.");
+            }
+            String label = p.getString("label");
+            String url = p.getString("url");
+            // Omitted, blank or '*' privilege means "no gate" -> visible to all users.
+            String privilege = p.getString("privilege", "");
+            String icon = p.getString("icon", DEFAULT_ICON);
+            String group = p.getString("group", topGroup);
+            int order = p.getInt("order", index);
 
-        // A blank privilege or '*' means "no gate": the item is visible to all users, so no
-        // privilege is registered. Otherwise register it so it is assignable to roles in the
-        // security module (superusers always pass the check; everyone else needs the privilege).
-        boolean gated = !privilege.isBlank() && !"*".equals(privilege.trim());
-        if (gated) {
-            yamcs.getSecurityStore().addSystemPrivilege(new SystemPrivilege(privilege));
+            boolean gated = !privilege.isBlank() && !"*".equals(privilege.trim());
+            if (gated && registeredPrivileges.add(privilege)) {
+                // Register so it is assignable to roles in the security module
+                // (superusers always pass; everyone else needs the privilege).
+                yamcs.getSecurityStore().addSystemPrivilege(new SystemPrivilege(privilege));
+            }
+
+            var page = new HashMap<String, Object>();
+            page.put("label", label);
+            page.put("url", url);
+            page.put("privilege", privilege);
+            page.put("icon", icon);
+            page.put("group", group);
+            page.put("order", order);
+            pages.add(page);
+            labels.add(label);
+            index++;
         }
 
-        // Passed through to the web app and read by the extension at runtime, so the label
-        // and URL can be changed in etc/external-webpage.yaml without rebuilding anything.
+        // The whole page list is passed to the web app and read by the extension at runtime,
+        // so pages/labels/URLs can be changed in etc/external-webpage.yaml without rebuilding.
         Map<String, Object> extensionConfig = new HashMap<>();
-        extensionConfig.put("label", label);
-        extensionConfig.put("url", url);
-        extensionConfig.put("privilege", privilege);
-        extensionConfig.put("group", group);
-        extensionConfig.put("icon", icon);
-        extensionConfig.put("order", order);
+        extensionConfig.put("pages", pages);
 
         Path staticRoot = extractWebBundle();
 
@@ -115,8 +139,7 @@ public class ExternalPagePlugin extends AbstractPlugin {
         // matching custom element <external-webpage>.
         webPlugin.addExtension(pluginName, extensionConfig, staticRoot);
 
-        log.info("Registered external-page extension '{}' -> {} ({}, group: {})",
-                label, url, gated ? "privilege: " + privilege : "visible to all users", group);
+        log.info("Registered external-page extension with {} page(s): {}", pages.size(), labels);
     }
 
     /**

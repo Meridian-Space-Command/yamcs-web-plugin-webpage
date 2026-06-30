@@ -1,7 +1,13 @@
-# Demo configuration for the ESTRACK external-page plugin.
-label: ESTRACK
-url: https://estracknow.esa.int/
-privilege: web.ESTRACK
+# Demo configuration for the external-webpage plugin: two pages.
+pages:
+  - label: ESTRACK
+    url: https://estracknow.esa.int/
+    privilege: "*"
+    icon: public
+
+  - label: Example
+    url: https://example.com/
+    privilege: "*"
+    icon: language
+
 group: archive
-icon: public
-order: 0

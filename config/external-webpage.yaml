@@ -1,32 +1,43 @@
 # Configuration for the external-webpage plugin.
 #
-# EDIT THE TWO VALUES BELOW. They are read by Yamcs at startup and passed to the
-# web UI, so changing them takes effect on the next restart -- no rebuild required.
-# (The install script copies this file into your Yamcs deployment's etc/ directory.)
+# Values are read by Yamcs at startup and passed to the web UI, so changes take effect on
+# the next restart -- no rebuild required. (The install script copies this file into
+# <yamcs>/etc/, and its --label/--url/--privilege flags edit the single-page keys below.)
 
-# Text shown for the item in the yamcs-web sidebar (this is "the name").
+# ---- Single page (simple form) ----
+
+# Name shown for the item in the yamcs-web sidebar.
 label: My Page
 
-# External webpage embedded (in an iframe) in the main content area.
-# Note: the target site must permit being framed. Sites that send
-# 'X-Frame-Options: DENY/SAMEORIGIN' or a restrictive CSP 'frame-ancestors'
-# will refuse to embed.
+# External webpage embedded (in an iframe) in the main view. The target site must permit
+# being framed -- sites sending 'X-Frame-Options: DENY/SAMEORIGIN' or a restrictive CSP
+# 'frame-ancestors' will refuse to embed.
 url: https://example.com/
 
-# ---- Optional settings (sensible defaults shown) ----
-
-# System privilege required to see the item. The plugin registers this privilege
-# with the security module so it can be assigned to roles. Superusers always see it.
-# Set to "*" (or leave blank) to make the item visible to ALL users (no privilege gate).
-privilege: web.ExternalPage
-
-# Sidebar group. 'archive' renders the item as a standalone entry at the bottom of
-# the instance sidebar with a correct link. Other groups (telemetry, commanding,
-# procedures, mdb) are accepted but generally not suitable for external pages.
-group: archive
+# Privilege required to see the item. "*" (or blank) = visible to ALL users. Any other
+# value is registered as a system privilege (assignable to roles; superusers always see it).
+privilege: "*"
 
 # Material Symbols icon name shown next to the label.
 icon: public
 
-# Sort hint among extension items (lower = higher in the list).
-order: 0
+# Sidebar group. 'archive' renders the item as a standalone entry at the bottom of the
+# instance sidebar with a correct link (recommended).
+group: archive
+
+# ---- Multiple pages ----
+#
+# To show several pages, replace the single-page keys above with a 'pages:' list. Each
+# entry becomes a sidebar item, in list order. Per-page keys are the same as above
+# (label + url required; privilege/icon/group/order optional):
+#
+# pages:
+#   - label: ESTRACK
+#     url: https://estracknow.esa.int/
+#     privilege: "*"
+#     icon: public
+#   - label: Mission Wiki
+#     url: https://wiki.example.org/
+#     privilege: web.Wiki        # only users with this privilege see it
+#     icon: menu_book
+# group: archive                 # applies to all pages (per-page 'group:' overrides it)
