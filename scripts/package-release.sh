@@ -48,10 +48,10 @@ It is compiled for the Yamcs version named in the jar file:
 Configure your pages by editing \`external-webpage.yaml\` in this bundle (a \`pages:\` list),
 then install into an existing Yamcs deployment (the directory containing bin/, etc/, lib/):
 
-    ./install.sh /path/to/your/yamcs
+    ./install.sh /path/to/your/yamcs          # add -y to skip the confirmation prompt
 
-install.sh is a force install: it overwrites \`<yamcs>/etc/external-webpage.yaml\` (backing
-up any existing copy to \`.bak\`), so edit the config in THIS bundle before running it.
+install.sh is a force install: it overwrites the jar and \`<yamcs>/etc/external-webpage.yaml\`
+(no backup) after you confirm, so edit the config in THIS bundle before running it.
 
 Then:
 

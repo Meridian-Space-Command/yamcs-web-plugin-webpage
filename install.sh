@@ -2,17 +2,17 @@
 #
 # Install the external-webpage plugin into an existing Yamcs deployment.
 #
+# This is a force install: it OVERWRITES the plugin jar in <YAMCS_HOME>/lib/ and the
+# config <YAMCS_HOME>/etc/external-webpage.yaml (no backup is kept). You are asked to
+# confirm first, unless you pass -y.
+#
 # Usage:
-#   ./install.sh [--build] <YAMCS_HOME>
+#   ./install.sh [-y] [--build] <YAMCS_HOME>
 #
 #   <YAMCS_HOME>   Path to a Yamcs installation (the dir containing bin/, etc/, lib/).
+#   -y, --yes      Skip the confirmation prompt (non-interactive).
 #   --build        Build the plugin with Maven first (source checkout only; needs JDK 17+).
 #   -h, --help     Show this help.
-#
-# What it does (force install -- always overwrites, so re-running is deterministic):
-#   * copies the plugin jar into <YAMCS_HOME>/lib/   (auto-loaded from the classpath)
-#   * copies external-webpage.yaml into <YAMCS_HOME>/etc/, backing up any existing copy
-#     to external-webpage.yaml.bak
 #
 # Configure pages by editing external-webpage.yaml (a 'pages:' list) -- ideally in this
 # bundle BEFORE installing, since install overwrites <YAMCS_HOME>/etc/external-webpage.yaml.
@@ -22,13 +22,28 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
-usage() { sed -n '3,21p' "${BASH_SOURCE[0]}" | sed 's/^# \{0,1\}//'; }
+usage() {
+  cat <<'EOF'
+Usage: ./install.sh [-y] [--build] <YAMCS_HOME>
+
+  <YAMCS_HOME>   Path to a Yamcs installation (the dir containing bin/, etc/, lib/).
+  -y, --yes      Skip the confirmation prompt (non-interactive).
+  --build        Build the plugin with Maven first (source checkout only; needs JDK 17+).
+  -h, --help     Show this help.
+
+Force install: overwrites the plugin jar in <YAMCS_HOME>/lib/ and the config
+<YAMCS_HOME>/etc/external-webpage.yaml (no backup). Edit external-webpage.yaml
+(a 'pages:' list) in this bundle before installing, then restart Yamcs.
+EOF
+}
 
 BUILD=0
+ASSUME_YES=0
 YAMCS_HOME=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    -y|--yes) ASSUME_YES=1; shift ;;
     --build) BUILD=1; shift ;;
     -h|--help) usage; exit 0 ;;
     -*) echo "ERROR: unknown option '$1'" >&2; usage >&2; exit 1 ;;
@@ -74,19 +89,28 @@ for c in "$SCRIPT_DIR/external-webpage.yaml" "$SCRIPT_DIR/config/external-webpag
   if [[ -f "$c" ]]; then CONFIG_SRC="$c"; break; fi
 done
 
+CONFIG_DST="$YAMCS_HOME/etc/external-webpage.yaml"
+
+# Confirm before overwriting (unless -y).
+if [[ "$ASSUME_YES" -ne 1 ]]; then
+  echo "WARNING: this will OVERWRITE the following in '$YAMCS_HOME' (no backup):"
+  echo "    lib/$(basename "$JAR")  (and any other external-webpage-*.jar)"
+  [[ -e "$CONFIG_DST" ]] && echo "    etc/external-webpage.yaml  (existing config will be replaced)"
+  printf "Proceed? [y/N] "
+  read -r answer || answer=""
+  case "$answer" in
+    y|Y|yes|YES) ;;
+    *) echo "Aborted."; exit 1 ;;
+  esac
+fi
+
 echo ">> Installing plugin jar:"
 echo "     $JAR"
 echo "   -> $YAMCS_HOME/lib/"
-# Force: remove any previous version of this plugin, then copy.
 rm -f "$YAMCS_HOME"/lib/external-webpage-*.jar
 cp -f "$JAR" "$YAMCS_HOME/lib/"
 
-CONFIG_DST="$YAMCS_HOME/etc/external-webpage.yaml"
 if [[ -n "$CONFIG_SRC" ]]; then
-  if [[ -e "$CONFIG_DST" ]]; then
-    cp -f "$CONFIG_DST" "$CONFIG_DST.bak"
-    echo ">> Backed up existing config -> $CONFIG_DST.bak"
-  fi
   echo ">> Installing config (overwrite): $CONFIG_DST"
   cp -f "$CONFIG_SRC" "$CONFIG_DST"
 else
@@ -97,7 +121,6 @@ cat <<EOF
 
 Done. Next steps:
   1. Edit $CONFIG_DST -- a 'pages:' list (label + url per page; optional privilege/icon).
-     (If you had a config, your previous one is at $CONFIG_DST.bak.)
   2. For gated pages, grant the configured privilege to a role, or use "*" for all users.
   3. Restart Yamcs. Open an instance in yamcs-web; the items are in the left sidebar.
 EOF

@@ -118,21 +118,21 @@ Download with a redirect-following client (`wget`, or `curl -L` — a plain `cur
 `-L` saves an empty/HTML stub and `unzip` then fails):
 
 ```bash
-wget https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases/download/v1.2.0/external-webpage-1.2.0-yamcs-5.13.0-bundle.zip
-unzip external-webpage-1.2.0-yamcs-5.13.0-bundle.zip
-cd external-webpage-1.2.0-yamcs-5.13.0-bundle
+wget https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases/download/v1.2.1/external-webpage-1.2.1-yamcs-5.13.0-bundle.zip
+unzip external-webpage-1.2.1-yamcs-5.13.0-bundle.zip
+cd external-webpage-1.2.1-yamcs-5.13.0-bundle
 
 # edit the pages in external-webpage.yaml, then install:
 $EDITOR external-webpage.yaml
-./install.sh /path/to/your/yamcs
+./install.sh /path/to/your/yamcs          # add -y to skip the confirmation prompt
 ```
 
 Pick the release whose `yamcs-<ver>` suffix matches your server's Yamcs version.
 
-`install.sh` is a **force install**: it always overwrites the jar in `<yamcs>/lib/` and the
-config in `<yamcs>/etc/external-webpage.yaml` (backing up any existing config to `.bak`). So
-edit `external-webpage.yaml` **in the bundle** before installing — that's the config that
-gets applied. Re-running it is therefore deterministic. Restart Yamcs afterwards.
+`install.sh` is a **force install**: it overwrites the jar in `<yamcs>/lib/` and the config
+in `<yamcs>/etc/external-webpage.yaml` (no backup). It asks for confirmation first; pass `-y`
+to skip the prompt (e.g. for automation). So edit `external-webpage.yaml` **in the bundle**
+before installing — that's the config that gets applied. Restart Yamcs afterwards.
 
 **Cutting a release** (maintainers): push a version tag and the
 [`release` workflow](.github/workflows/release.yml) builds and publishes everything:
