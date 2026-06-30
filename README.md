@@ -1,9 +1,9 @@
 # Yamcs external-webpage plugin
 
-A small, externally-distributed [Yamcs](https://yamcs.org) plugin that adds an item to the
-yamcs-web sidebar which embeds an **external webpage** in the main content area. The sidebar
-**name** and the **URL** are set in a config file — no rebuild needed to change them — and
-visibility is gated by a Yamcs **system privilege**.
+A small, externally-distributed [Yamcs](https://yamcs.org) plugin that adds one or more items
+to the yamcs-web sidebar, each embedding an **external webpage** in the main content area. The
+**pages** (name + URL each) are set in a config file — no rebuild needed to change them — and
+each page's visibility is gated by a Yamcs **system privilege**.
 
 The bundled Docker demo configures it as **ESTRACK** → <https://estracknow.esa.int/>, but
 that is just example configuration; point it at any site you like.
@@ -14,9 +14,8 @@ that is just example configuration; point it at any site you like.
 
 ## Configuring the pages
 
-Everything user-facing lives in one config file, **`etc/external-webpage.yaml`**. For a
-single page, set top-level `label:`/`url:` keys. For **several pages**, use a `pages:` list —
-each entry becomes a sidebar item (in list order) that embeds its URL:
+Everything user-facing lives in one config file, **`etc/external-webpage.yaml`**: a `pages:`
+list where each entry becomes a sidebar item (in list order) that embeds its URL:
 
 ```yaml
 pages:
@@ -49,8 +48,7 @@ Per-page keys:
 | `group`     | no       | top `group` | Sidebar group; `archive` is recommended.                 |
 | `order`     | no       | list index  | Sort hint; defaults to the page's position in the list.  |
 
-Sidebar order follows the list order. (`install.sh`'s `--label`/`--url`/`--privilege` flags
-fill in the single-page form; for multiple pages, edit the `pages:` list directly.)
+Sidebar order follows the list order.
 
 ---
 
@@ -120,29 +118,21 @@ Download with a redirect-following client (`wget`, or `curl -L` — a plain `cur
 `-L` saves an empty/HTML stub and `unzip` then fails):
 
 ```bash
-wget https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases/download/v1.1.0/external-webpage-1.1.0-yamcs-5.13.0-bundle.zip
-unzip external-webpage-1.1.0-yamcs-5.13.0-bundle.zip
-cd external-webpage-1.1.0-yamcs-5.13.0-bundle
+wget https://github.com/Meridian-Space-Command/yamcs-web-plugin-webpage/releases/download/v1.2.0/external-webpage-1.2.0-yamcs-5.13.0-bundle.zip
+unzip external-webpage-1.2.0-yamcs-5.13.0-bundle.zip
+cd external-webpage-1.2.0-yamcs-5.13.0-bundle
 
-# install, setting the sidebar name + URL in one go:
-./install.sh --label "ESTRACK" --url "https://estracknow.esa.int/" /path/to/your/yamcs
+# edit the pages in external-webpage.yaml, then install:
+$EDITOR external-webpage.yaml
+./install.sh /path/to/your/yamcs
 ```
 
 Pick the release whose `yamcs-<ver>` suffix matches your server's Yamcs version.
 
-### Setting the name and URL
-
-`install.sh` writes the config to `<yamcs>/etc/external-webpage.yaml`. Pass values to fill it
-in (otherwise edit that file by hand afterwards):
-
-| Flag                | Sets             | Config key  |
-|---------------------|------------------|-------------|
-| `--label "<text>"`  | sidebar name     | `label`     |
-| `--url "<url>"`     | embedded page    | `url`       |
-| `--privilege "<p>"` | required privilege | `privilege` |
-
-Flags are applied each run, so you can also use it to update an existing install
-(`./install.sh --url "https://new.example/" /path/to/your/yamcs`).
+`install.sh` is a **force install**: it always overwrites the jar in `<yamcs>/lib/` and the
+config in `<yamcs>/etc/external-webpage.yaml` (backing up any existing config to `.bak`). So
+edit `external-webpage.yaml` **in the bundle** before installing — that's the config that
+gets applied. Re-running it is therefore deterministic. Restart Yamcs afterwards.
 
 **Cutting a release** (maintainers): push a version tag and the
 [`release` workflow](.github/workflows/release.yml) builds and publishes everything:
@@ -203,15 +193,14 @@ npm run build      # ng build + finalize -> dist/bundle/ (main.js + manifest.txt
 npm run typecheck  # optional type check
 ```
 
-## Renaming the plugin / running several pages
+## Renaming the plugin
 
-This package ships a single page named `external-webpage`. The displayed name and URL are
-configuration, so you usually only edit `etc/external-webpage.yaml`. To run a *second*,
-independent page (its own sidebar entry and privilege) you need a second plugin with a
-distinct id: change the plugin `artifactId`, the `TAG` constants in
-`web-extension/src/main.ts` and `web-extension/src/external-webpage.component.ts`, and the
-`CONFIG_SUBSYSTEM` in the Java plugin to a new hyphenated name, then rebuild — those
-identifiers must stay equal to each other.
+Add as many pages as you like via the `pages:` list — no code changes needed. You'd only
+rename the plugin itself if you want a *second, independent* installation alongside this one
+(its own plugin id, so both can be installed together). To do that, change the plugin
+`artifactId`, the `TAG` constants in `web-extension/src/main.ts` and
+`web-extension/src/external-webpage.component.ts`, and the `CONFIG_SUBSYSTEM` in the Java
+plugin to a new hyphenated name, then rebuild — those identifiers must stay equal.
 
 ## Compatibility
 

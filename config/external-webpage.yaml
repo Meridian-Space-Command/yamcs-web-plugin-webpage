@@ -1,43 +1,26 @@
 # Configuration for the external-webpage plugin.
 #
-# Values are read by Yamcs at startup and passed to the web UI, so changes take effect on
-# the next restart -- no rebuild required. (The install script copies this file into
-# <yamcs>/etc/, and its --label/--url/--privilege flags edit the single-page keys below.)
+# Define one or more pages under 'pages:'. Each entry becomes an item in the yamcs-web
+# sidebar (in list order) that embeds its URL in the main view. Values are read at Yamcs
+# startup and passed to the web UI, so changes take effect on the next restart -- no
+# rebuild required. (The install script copies this file into <yamcs>/etc/.)
 
-# ---- Single page (simple form) ----
+pages:
+  - label: My Page                 # name shown in the sidebar (required)
+    url: https://example.com/      # page embedded in an iframe (required)
+    privilege: "*"                 # "*"/blank = all users; else a system privilege (gated)
+    icon: public                   # Material Symbols icon name (optional)
 
-# Name shown for the item in the yamcs-web sidebar.
-label: My Page
+  # Add more pages; they appear in this order:
+  # - label: Mission Wiki
+  #   url: https://wiki.example.org/
+  #   privilege: web.Wiki          # only users with this privilege see it
+  #   icon: menu_book
 
-# External webpage embedded (in an iframe) in the main view. The target site must permit
-# being framed -- sites sending 'X-Frame-Options: DENY/SAMEORIGIN' or a restrictive CSP
-# 'frame-ancestors' will refuse to embed.
-url: https://example.com/
-
-# Privilege required to see the item. "*" (or blank) = visible to ALL users. Any other
-# value is registered as a system privilege (assignable to roles; superusers always see it).
-privilege: "*"
-
-# Material Symbols icon name shown next to the label.
-icon: public
-
-# Sidebar group. 'archive' renders the item as a standalone entry at the bottom of the
-# instance sidebar with a correct link (recommended).
+# Sidebar group applied to all pages (a per-page 'group:' overrides it). 'archive' renders
+# items as standalone entries at the bottom of the instance sidebar with a correct link;
+# other groups (telemetry, commanding, procedures, mdb) are accepted but not recommended.
 group: archive
 
-# ---- Multiple pages ----
-#
-# To show several pages, replace the single-page keys above with a 'pages:' list. Each
-# entry becomes a sidebar item, in list order. Per-page keys are the same as above
-# (label + url required; privilege/icon/group/order optional):
-#
-# pages:
-#   - label: ESTRACK
-#     url: https://estracknow.esa.int/
-#     privilege: "*"
-#     icon: public
-#   - label: Mission Wiki
-#     url: https://wiki.example.org/
-#     privilege: web.Wiki        # only users with this privilege see it
-#     icon: menu_book
-# group: archive                 # applies to all pages (per-page 'group:' overrides it)
+# Note: the target site must permit being framed. Sites sending 'X-Frame-Options:
+# DENY/SAMEORIGIN' or a restrictive CSP 'frame-ancestors' will refuse to embed.

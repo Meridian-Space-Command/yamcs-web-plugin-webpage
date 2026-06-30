@@ -21,15 +21,7 @@ interface PageConfig {
 }
 
 interface ExtensionConfig {
-  // Current format: a list of pages.
   pages?: PageConfig[];
-  // Legacy single-page format (top-level keys) — still accepted.
-  label?: string;
-  url?: string;
-  privilege?: string;
-  group?: NavGroup;
-  icon?: string;
-  order?: number;
 }
 
 interface ResolvedPage extends PageConfig {
@@ -110,32 +102,10 @@ export class ExternalWebpageComponent extends YamcsWebExtension {
     }
   }
 
-  /** Normalises the config (list or legacy single-page) into a list with stable keys. */
+  /** Reads the configured pages and assigns each a stable URL key. */
   private resolvePages(): ResolvedPage[] {
     const cfg = this.configService.getExtraConfig(TAG) as ExtensionConfig | undefined;
-    if (!cfg) {
-      return [];
-    }
-
-    let raw: PageConfig[];
-    if (Array.isArray(cfg.pages)) {
-      raw = cfg.pages;
-    } else if (cfg.url) {
-      // Legacy single-page format (top-level keys).
-      raw = [
-        {
-          label: cfg.label ?? cfg.url,
-          url: cfg.url,
-          privilege: cfg.privilege,
-          group: cfg.group,
-          icon: cfg.icon,
-          order: cfg.order,
-        },
-      ];
-    } else {
-      raw = [];
-    }
-    raw = raw.filter((p) => p && p.url);
+    const raw = (cfg?.pages ?? []).filter((p) => p && p.url);
 
     const usedKeys = new Set<string>();
     return raw.map((p, index) => {

@@ -79,17 +79,16 @@ public class ExternalPagePlugin extends AbstractPlugin {
             return;
         }
 
-        // Resolve the list of pages. Either an explicit 'pages:' list, or a single page from
-        // top-level 'label'/'url'/... keys (backward compatible with the original config).
+        // Configuration is a 'pages:' list; each entry becomes a sidebar item.
         String topGroup = config.getString("group", DEFAULT_GROUP);
-        List<YConfiguration> pageConfigs;
-        if (config.containsKey("pages")) {
-            pageConfigs = config.getConfigList("pages");
-        } else if (config.containsKey("label") && config.containsKey("url")) {
-            pageConfigs = List.of(config);
-        } else {
-            throw new PluginException("etc/" + CONFIG_SUBSYSTEM
-                    + ".yaml must define a 'pages' list (or a top-level 'label' and 'url').");
+        if (!config.containsKey("pages")) {
+            throw new PluginException(
+                    "etc/" + CONFIG_SUBSYSTEM + ".yaml must define a 'pages' list.");
+        }
+        List<YConfiguration> pageConfigs = config.getConfigList("pages");
+        if (pageConfigs.isEmpty()) {
+            throw new PluginException(
+                    "etc/" + CONFIG_SUBSYSTEM + ".yaml 'pages' list must contain at least one page.");
         }
 
         var pages = new ArrayList<Map<String, Object>>();
